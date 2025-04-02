@@ -1,0 +1,13 @@
+services:
+  mysql:
+    container_name: linkapp-db
+    image: mysql:latest
+    environment:
+      MYSQL_DATABASE: linkappdb
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_USER: ${MYSQL_USER}
+    volumes:
+      - ./dbdata:/var/lib/mysql
+    ports:
+      - "3306:3306"
