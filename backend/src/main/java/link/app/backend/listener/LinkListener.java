@@ -3,20 +3,30 @@ package link.app.backend.listener;
 import jakarta.persistence.PostPersist;
 import jakarta.persistence.PostRemove;
 import jakarta.persistence.PostUpdate;
+import jakarta.persistence.PrePersist;
 import link.app.backend.entity.Link;
+import link.app.backend.service.IBrowserAvailabilityService;
 import link.app.backend.service.ILinkHistoryService;
 
 import org.apache.commons.logging.LogFactory;
 import org.apache.commons.logging.Log;
 
-public class LinkAuditListener {
+public class LinkListener {
 
-    private static Log log = LogFactory.getLog(LinkAuditListener.class);
+    private static Log log = LogFactory.getLog(LinkListener.class);
 
     private final ILinkHistoryService linkHistoryService;
+    private final IBrowserAvailabilityService browserAvailabilityService;
 
-    public LinkAuditListener(ILinkHistoryService linkHistoryService) {
+    public LinkListener(ILinkHistoryService linkHistoryService, IBrowserAvailabilityService browserAvailabilityService) {
         this.linkHistoryService = linkHistoryService;
+        this.browserAvailabilityService = browserAvailabilityService;
+    }
+
+    @PrePersist
+    private void beforeLinkCreated(Link link) {
+        link.setAvailableChrome(browserAvailabilityService.checkChromeAvailability(link.getUrl()));
+        link.setAvailableFirefox(browserAvailabilityService.checkFirefoxAvailability(link.getUrl()));
     }
     
     @PostPersist

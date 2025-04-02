@@ -1,5 +1,6 @@
 package link.app.backend.entity;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 import jakarta.persistence.Lob;
@@ -12,11 +13,13 @@ public class Link  {
     @GeneratedValue
     private Long id;
 
+    @Column(nullable = false)
     private String title;
 
     @Lob
     private String description;
 
+    @Column(nullable = false)
     private String url;
 
     @Lob
@@ -30,13 +33,11 @@ public class Link  {
 
     public Link() {}
 
-    public Link(String title, String description, String url, byte[] imageData, boolean isAvailableFirefox, boolean isAvailableChrome, boolean isActive) {
+    public Link(String title, String description, String url, byte[] imageData, boolean isActive) {
         this.title = title;
         this.description = description;
         this.url = url;
         this.imageData = imageData;
-        this.isAvailableFirefox = isAvailableFirefox;
-        this.isAvailableChrome = isAvailableChrome;
         this.isActive = isActive;
     }
 

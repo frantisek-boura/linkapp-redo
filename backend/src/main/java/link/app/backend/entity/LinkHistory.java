@@ -17,12 +17,14 @@ public class LinkHistory {
     private Long id;
 
     @ManyToOne
-    @Column(name = "id")
+    @Column(name = "id", nullable = false)
     private Link link;
 
     @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private ActionType action;
 
+    @Column(nullable = false)
     private Timestamp timestamp;
 
     public LinkHistory() {}

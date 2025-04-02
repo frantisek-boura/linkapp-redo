@@ -1,6 +1,7 @@
 package link.app.backend.service;
 
 import java.sql.Timestamp;
+import java.time.Instant;
 
 import org.springframework.stereotype.Service;
 
@@ -8,7 +9,6 @@ import link.app.backend.entity.Link;
 import link.app.backend.entity.LinkHistory;
 import link.app.backend.enums.ActionType;
 import link.app.backend.repository.LinkHistoryRepository;
-
 
 @Service
 public class LinkHistoryService implements ILinkHistoryService {
@@ -23,7 +23,7 @@ public class LinkHistoryService implements ILinkHistoryService {
         LinkHistory linkHistory = new LinkHistory(
             link,
             action,
-            Timestamp.from(java.time.Instant.now())
+            Timestamp.from(Instant.now())
         );
         linkHistoryRepository.save(linkHistory);
     }
