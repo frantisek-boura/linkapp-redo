@@ -1,13 +1,11 @@
 package link.app.backend.entity;
 
-import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 import jakarta.persistence.Lob;
 
 import java.util.Arrays;
 
-@Entity(name = "links")
 public class Link  {
 
     @Id

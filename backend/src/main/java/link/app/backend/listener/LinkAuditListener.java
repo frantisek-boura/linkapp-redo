@@ -4,6 +4,7 @@ import jakarta.persistence.PostPersist;
 import jakarta.persistence.PostRemove;
 import jakarta.persistence.PostUpdate;
 import link.app.backend.entity.Link;
+import link.app.backend.service.ILinkHistoryService;
 
 import org.apache.commons.logging.LogFactory;
 import org.apache.commons.logging.Log;
@@ -11,26 +12,29 @@ import org.apache.commons.logging.Log;
 public class LinkAuditListener {
 
     private static Log log = LogFactory.getLog(LinkAuditListener.class);
+
+    private final ILinkHistoryService linkHistoryService;
+
+    public LinkAuditListener(ILinkHistoryService linkHistoryService) {
+        this.linkHistoryService = linkHistoryService;
+    }
     
     @PostPersist
     private void afterLinkCreated(Link link) {
         log.info("Link Created: " + link.getId());
-        // TODO: Service to add this link to the history table
-        // with action Created
+        linkHistoryService.logLinkCreated(link);
     }
 
     @PostUpdate
     private void afterLinkUpdated(Link link) {
         log.info("Link Updated: " + link.getId());
-        // TODO: Service to add this link to the history table
-        // with action Updated 
+        linkHistoryService.logLinkUpdated(link);
     }
 
     @PostRemove
     private void afterLinkRemoved(Link link) {
         log.info("Link Removed: " + link.getId());
-        // TODO: Service to add this link to the history table
-        // with action Removed
+        linkHistoryService.logLinkRemoved(link);
     }
 
 }

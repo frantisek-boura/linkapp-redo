@@ -3,16 +3,13 @@ package link.app.backend.entity;
 import java.sql.Timestamp;
 
 import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import link.app.backend.enums.ActionType;
 
-@Entity(name = "link_history")
 public class LinkHistory {
     
     @Id 
@@ -20,7 +17,7 @@ public class LinkHistory {
     private Long id;
 
     @ManyToOne
-    @JoinColumn(name = "link_id", nullable = false)
+    @Column(name = "id")
     private Link link;
 
     @Enumerated(EnumType.STRING)
@@ -30,8 +27,7 @@ public class LinkHistory {
 
     public LinkHistory() {}
 
-    public LinkHistory(Long id, Link link, ActionType action, Timestamp timestamp) {
-        this.id = id;
+    public LinkHistory(Link link, ActionType action, Timestamp timestamp) {
         this.link = link;
         this.action = action;
         this.timestamp = timestamp;
