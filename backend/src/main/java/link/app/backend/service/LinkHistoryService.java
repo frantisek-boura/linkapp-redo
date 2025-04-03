@@ -1,46 +1,32 @@
 package link.app.backend.service;
 
-import java.sql.Timestamp;
-import java.time.Instant;
+import java.util.List;
 
+import org.hibernate.envers.AuditReader;
+import org.hibernate.envers.AuditReaderFactory;
+import org.hibernate.envers.query.AuditEntity;
+import org.hibernate.envers.query.AuditQuery;
 import org.springframework.stereotype.Service;
 
+import jakarta.persistence.EntityManager;
 import link.app.backend.entity.Link;
-import link.app.backend.entity.LinkHistory;
-import link.app.backend.enums.ActionType;
-import link.app.backend.repository.LinkHistoryRepository;
 
 @Service
 public class LinkHistoryService implements ILinkHistoryService {
+ 
+    private final EntityManager entityManager;
 
-    private final LinkHistoryRepository linkHistoryRepository;
-
-    public LinkHistoryService(LinkHistoryRepository linkHistoryRepository) {
-        this.linkHistoryRepository = linkHistoryRepository;
-    }
-
-    private void logLinkWithAction(Link link, ActionType action) {
-        LinkHistory linkHistory = new LinkHistory(
-            link,
-            action,
-            Timestamp.from(Instant.now())
-        );
-        linkHistoryRepository.save(linkHistory);
+    public LinkHistoryService(EntityManager entityManager) {
+        this.entityManager = entityManager;
     }
 
     @Override
-    public void logLinkCreated(Link link) {
-        logLinkWithAction(link, ActionType.CREATED);
+    public List<Link> getLinkHistory(Long id) {
+        AuditReader reader = AuditReaderFactory.get(entityManager);
+        AuditQuery query = reader.createQuery()
+            .forRevisionsOfEntity(Link.class, true, true)
+            .add(AuditEntity.property("id").eq(id));
+        return query.getResultList();
     }
-
-    @Override
-    public void logLinkUpdated(Link link) {
-        logLinkWithAction(link, ActionType.UPDATED);
-    }
-
-    @Override
-    public void logLinkRemoved(Link link) {
-        logLinkWithAction(link, ActionType.REMOVED);
-    }
-
+    
 }

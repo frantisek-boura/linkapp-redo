@@ -1,10 +1,10 @@
 package link.app.backend.service;
 
+import java.util.List;
 import link.app.backend.entity.Link;
 
 public interface ILinkHistoryService {
 
-    void logLinkCreated(Link link);
-    void logLinkUpdated(Link link);
-    void logLinkRemoved(Link link);
+    List<Link> getLinkHistory(Long id);
+
 }
