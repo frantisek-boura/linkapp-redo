@@ -10,42 +10,43 @@ import org.springframework.hateoas.EntityModel;
 import org.springframework.hateoas.IanaLinkRelations;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.servlet.function.EntityResponse;
 
 import link.app.backend.assembler.LinkModelAssembler;
 import link.app.backend.dto.LinkDto;
 import link.app.backend.entity.Link;
 import link.app.backend.exception.LinkNotFoundException;
 import link.app.backend.repository.LinkRepository;
-import link.app.backend.service.IBrowserAvailabilityService;
 import link.app.backend.service.ILinkHistoryService;
+import link.app.backend.service.INewLinkService;
 
 @RestController
+@RequestMapping("/links")
 public class LinkController {
     
-    private final LinkRepository repository;
-    private final LinkModelAssembler assembler;
-    private final ILinkHistoryService history;
-    private final IBrowserAvailabilityService browserAvailabilityService;
+    private final LinkRepository linkRepository;
+    private final LinkModelAssembler linkModelAssembler;
+    private final ILinkHistoryService linkHistoryService;
+    private final INewLinkService newLinkService;
 
-    public LinkController(LinkRepository repository, LinkModelAssembler assembler, ILinkHistoryService history, IBrowserAvailabilityService browserAvailabilityService) {
-        this.repository = repository;
-        this.assembler = assembler;
-        this.history = history;
-        this.browserAvailabilityService = browserAvailabilityService;
+    public LinkController(LinkRepository repository, LinkModelAssembler assembler, ILinkHistoryService history, INewLinkService newLinkService) {
+        this.linkRepository = repository;
+        this.linkModelAssembler = assembler;
+        this.linkHistoryService = history;
+        this.newLinkService = newLinkService;
     }
 
     @GetMapping("/{id}")
     public EntityModel<Link> getLinkById(@PathVariable Long id) {
-        Link link = repository.findById(id)
+        Link link = linkRepository.findById(id)
             .orElseThrow(() -> new LinkNotFoundException(id));
-        return assembler.toModel(link);
+
+        return linkModelAssembler.toModel(link);
     }
 
     @GetMapping("/{id}/history")
     public CollectionModel<EntityModel<Link>> getHistory(@PathVariable Long id) {
-        List<EntityModel<Link>> linkHistory = history.getLinkHistory(id).stream()
-            .map(assembler::toModel)
+        List<EntityModel<Link>> linkHistory = linkHistoryService.getLinkHistory(id).stream()
+            .map(linkModelAssembler::toModel)
             .collect(Collectors.toList());
 
         return CollectionModel.of(linkHistory,
@@ -54,8 +55,8 @@ public class LinkController {
 
     @GetMapping("")
     public CollectionModel<EntityModel<Link>> getLinks() {
-        List<EntityModel<Link>> links = repository.findAll().stream()
-            .map(assembler::toModel)
+        List<EntityModel<Link>> links = linkRepository.findAll().stream()
+            .map(linkModelAssembler::toModel)
             .collect(Collectors.toList());
 
         return CollectionModel.of(links,
@@ -64,23 +65,18 @@ public class LinkController {
 
     @PutMapping("/{id}")
     public ResponseEntity<EntityModel<Link>> editLink(@PathVariable Long id, @RequestBody LinkDto newLink) {
-        Link updatedLink = repository.findById(id)
+        Link updatedLink = linkRepository.findById(id)
             .map(link -> {
                 link.setTitle(newLink.title());
                 link.setDescription(newLink.description());
                 link.setUrl(newLink.url());
                 link.setImageData(newLink.imageData());
-                return repository.save(link);
+                return linkRepository.save(link);
             })
             .orElseGet(() -> {
-                boolean isAvailableFirefox = browserAvailabilityService.checkFirefoxAvailability(newLink.url());
-                boolean isAvailableChrome = browserAvailabilityService.checkChromeAvailability(newLink.url());
-                Link link = new Link(newLink.title(), newLink.description(), newLink.url(), newLink.imageData(), newLink.isActive());
-                link.setAvailableFirefox(isAvailableFirefox);
-                link.setAvailableChrome(isAvailableChrome);
-                return repository.save(link);
+                return linkRepository.save(newLinkService.createLink(newLink));
             });
-        EntityModel<Link> entityModel = assembler.toModel(updatedLink);
+        EntityModel<Link> entityModel = linkModelAssembler.toModel(updatedLink);
 
         return ResponseEntity
             .created(entityModel.getRequiredLink(IanaLinkRelations.SELF).toUri())
@@ -89,16 +85,10 @@ public class LinkController {
 
     @PostMapping("")
     public ResponseEntity<EntityModel<Link>> createLink(@RequestBody LinkDto newLink) {
-        boolean isAvailableFirefox = browserAvailabilityService.checkFirefoxAvailability(newLink.url());
-        boolean isAvailableChrome = browserAvailabilityService.checkChromeAvailability(newLink.url());
-        Link link = new Link(newLink.title(), newLink.description(), newLink.url(), newLink.imageData(), newLink.isActive());
-        link.setAvailableFirefox(isAvailableFirefox);
-        link.setAvailableChrome(isAvailableChrome);
-        repository.save(link);
-
+        Link link = linkRepository.save(newLinkService.createLink(newLink));
         return ResponseEntity
             .created(linkTo(methodOn(LinkController.class).getLinkById(link.getId())).toUri())
-            .body(assembler.toModel(link));
+            .body(linkModelAssembler.toModel(link));
     }
 
 }
