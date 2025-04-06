@@ -70,7 +70,7 @@ public class LinkService implements ILinkService {
         AuditQuery query = reader.createQuery()
             .forRevisionsOfEntity(Link.class, true, true)
             .add(AuditEntity.property("id").eq(id));
-        return query.getResultList();
+        return (List<Link>) query.getResultList();
     }
 
     @Override
