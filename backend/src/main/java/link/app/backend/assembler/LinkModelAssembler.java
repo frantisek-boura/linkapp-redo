@@ -8,17 +8,17 @@ import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
 
 import link.app.backend.controller.LinkController;
-import link.app.backend.entity.Link;
+import link.app.backend.response.LinkResponse;
 
 @Component
-public class LinkModelAssembler implements RepresentationModelAssembler<Link, EntityModel<Link>>{
+public class LinkModelAssembler implements RepresentationModelAssembler<LinkResponse, EntityModel<LinkResponse>>{
 
     @Override
-    public EntityModel<Link> toModel(Link link) {
-        return EntityModel.of(link,
-            linkTo(methodOn(LinkController.class).getLinkById(link.getId())).withSelfRel(),
+    public EntityModel<LinkResponse> toModel(LinkResponse response) {
+        return EntityModel.of(response,
+            linkTo(methodOn(LinkController.class).getLinkById(response.getId())).withSelfRel(),
             linkTo(methodOn(LinkController.class).getLinks()).withRel("links"),
-            linkTo(methodOn(LinkController.class).getHistory(link.getId())).withRel("history")
+            linkTo(methodOn(LinkController.class).getHistory(response.getId())).withRel("history")
         );
     }
 

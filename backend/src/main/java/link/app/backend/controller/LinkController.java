@@ -12,40 +12,35 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import link.app.backend.assembler.LinkModelAssembler;
-import link.app.backend.dto.LinkDto;
+import link.app.backend.request.LinkRequest;
+import link.app.backend.response.LinkResponse;
 import link.app.backend.entity.Link;
-import link.app.backend.exception.LinkNotFoundException;
-import link.app.backend.repository.LinkRepository;
-import link.app.backend.service.ILinkHistoryService;
-import link.app.backend.service.INewLinkService;
+import link.app.backend.service.ILinkService;
 
 @RestController
 @RequestMapping("/links")
 public class LinkController {
     
-    private final LinkRepository linkRepository;
     private final LinkModelAssembler linkModelAssembler;
-    private final ILinkHistoryService linkHistoryService;
-    private final INewLinkService newLinkService;
+    private final ILinkService linkService;
 
-    public LinkController(LinkRepository repository, LinkModelAssembler assembler, ILinkHistoryService history, INewLinkService newLinkService) {
-        this.linkRepository = repository;
+    public LinkController(LinkModelAssembler assembler, ILinkService linkService) {
         this.linkModelAssembler = assembler;
-        this.linkHistoryService = history;
-        this.newLinkService = newLinkService;
+        this.linkService = linkService;
     }
 
     @GetMapping("/{id}")
-    public EntityModel<Link> getLinkById(@PathVariable Long id) {
-        Link link = linkRepository.findById(id)
-            .orElseThrow(() -> new LinkNotFoundException(id));
+    public EntityModel<LinkResponse> getLinkById(@PathVariable Long id) {
+        Link link = linkService.getById(id);
+        LinkResponse response = linkService.mapToResponse(link);
 
-        return linkModelAssembler.toModel(link);
+        return linkModelAssembler.toModel(response);
     }
 
     @GetMapping("/{id}/history")
-    public CollectionModel<EntityModel<Link>> getHistory(@PathVariable Long id) {
-        List<EntityModel<Link>> linkHistory = linkHistoryService.getLinkHistory(id).stream()
+    public CollectionModel<EntityModel<LinkResponse>> getHistory(@PathVariable Long id) {
+        List<EntityModel<LinkResponse>> linkHistory = linkService.getLinkHistory(id).stream()
+            .map(linkService::mapToResponse)
             .map(linkModelAssembler::toModel)
             .collect(Collectors.toList());
 
@@ -54,8 +49,9 @@ public class LinkController {
     }
 
     @GetMapping("")
-    public CollectionModel<EntityModel<Link>> getLinks() {
-        List<EntityModel<Link>> links = linkRepository.findAll().stream()
+    public CollectionModel<EntityModel<LinkResponse>> getLinks() {
+        List<EntityModel<LinkResponse>> links = linkService.getAll().stream()
+            .map(linkService::mapToResponse)
             .map(linkModelAssembler::toModel)
             .collect(Collectors.toList());
 
@@ -64,19 +60,9 @@ public class LinkController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<EntityModel<Link>> editLink(@PathVariable Long id, @RequestBody LinkDto newLink) {
-        Link updatedLink = linkRepository.findById(id)
-            .map(link -> {
-                link.setTitle(newLink.title());
-                link.setDescription(newLink.description());
-                link.setUrl(newLink.url());
-                link.setImageData(newLink.imageData());
-                return linkRepository.save(link);
-            })
-            .orElseGet(() -> {
-                return linkRepository.save(newLinkService.createLink(newLink));
-            });
-        EntityModel<Link> entityModel = linkModelAssembler.toModel(updatedLink);
+    public ResponseEntity<EntityModel<LinkResponse>> editLink(@PathVariable Long id, @RequestBody LinkRequest request) {
+        LinkResponse response = linkService.mapToResponse(linkService.updateLink(id, request));
+        EntityModel<LinkResponse> entityModel = linkModelAssembler.toModel(response);
 
         return ResponseEntity
             .created(entityModel.getRequiredLink(IanaLinkRelations.SELF).toUri())
@@ -84,11 +70,12 @@ public class LinkController {
     }
 
     @PostMapping("")
-    public ResponseEntity<EntityModel<Link>> createLink(@RequestBody LinkDto newLink) {
-        Link link = linkRepository.save(newLinkService.createLink(newLink));
+    public ResponseEntity<EntityModel<LinkResponse>> createLink(@RequestBody LinkRequest request) {
+        LinkResponse response = linkService.mapToResponse(linkService.createLink(request));
+
         return ResponseEntity
-            .created(linkTo(methodOn(LinkController.class).getLinkById(link.getId())).toUri())
-            .body(linkModelAssembler.toModel(link));
+            .created(linkTo(methodOn(LinkController.class).getLinkById(response.getId())).toUri())
+            .body(linkModelAssembler.toModel(response));
     }
 
 }
